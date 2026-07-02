@@ -22,6 +22,8 @@ export function CameraPunch({ employeeId, canTimeIn, canTimeOut }: Props) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [resetReason, setResetReason] = useState("");
+  const [openingCamera, setOpeningCamera] = useState(false);
+  const [cachedPosition, setCachedPosition] = useState<GeolocationPosition | null>(null);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -32,23 +34,37 @@ export function CameraPunch({ employeeId, canTimeIn, canTimeOut }: Props) {
     setError("");
     setMessage("");
     setMode(type);
+    setOpeningCamera(true);
 
     if (!window.isSecureContext) {
       setError("Camera and GPS require HTTPS. For phone testing, deploy the app online or open it on this computer using localhost.");
       setMode(null);
+      setOpeningCamera(false);
       return;
     }
 
     if (!navigator.mediaDevices?.getUserMedia) {
       setError("This browser does not allow camera access here. Please use Chrome, Edge, or Safari and allow camera permission.");
       setMode(null);
+      setOpeningCamera(false);
       return;
     }
 
     try {
-      const media = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+      warmLocation();
+      const media = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        },
+        audio: false
+      });
       setStream(media);
-      if (videoRef.current) videoRef.current.srcObject = media;
+      if (videoRef.current) {
+        videoRef.current.srcObject = media;
+        await videoRef.current.play().catch(() => undefined);
+      }
     } catch (err) {
       const name = err instanceof DOMException ? err.name : "";
       if (name === "NotAllowedError" || name === "PermissionDeniedError") {
@@ -61,6 +77,8 @@ export function CameraPunch({ employeeId, canTimeIn, canTimeOut }: Props) {
         setError("Camera could not be opened. Please refresh the page and allow camera permission.");
       }
       setMode(null);
+    } finally {
+      setOpeningCamera(false);
     }
   }
 
@@ -68,8 +86,12 @@ export function CameraPunch({ employeeId, canTimeIn, canTimeOut }: Props) {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) throw new Error("Camera is not ready.");
-    canvas.width = video.videoWidth || 720;
-    canvas.height = video.videoHeight || 720;
+    const sourceWidth = video.videoWidth || 720;
+    const sourceHeight = video.videoHeight || 720;
+    const maxWidth = 960;
+    const scale = Math.min(1, maxWidth / sourceWidth);
+    canvas.width = Math.round(sourceWidth * scale);
+    canvas.height = Math.round(sourceHeight * scale);
     const context = canvas.getContext("2d");
     if (!context) throw new Error("Camera is not ready.");
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -112,17 +134,32 @@ export function CameraPunch({ employeeId, canTimeIn, canTimeOut }: Props) {
     if (!navigator.geolocation) {
       throw new Error("This browser does not support GPS location.");
     }
+    if (cachedPosition && Date.now() - cachedPosition.timestamp < 30000) {
+      return cachedPosition;
+    }
     return new Promise<GeolocationPosition>((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(
-        resolve,
+        (position) => {
+          setCachedPosition(position);
+          resolve(position);
+        },
         (err) => {
           if (err.code === err.PERMISSION_DENIED) reject(new Error("GPS permission was blocked. Please allow location access and try again."));
           else if (err.code === err.POSITION_UNAVAILABLE) reject(new Error("GPS location is unavailable. Turn on Location/GPS and try again."));
           else reject(new Error("GPS request timed out. Please move to an open area and try again."));
         },
-        { enableHighAccuracy: true, timeout: 15000 }
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
       );
     });
+  }
+
+  function warmLocation() {
+    if (!navigator.geolocation || !window.isSecureContext) return;
+    navigator.geolocation.getCurrentPosition(
+      (position) => setCachedPosition(position),
+      () => undefined,
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+    );
   }
 
   function submitPunch() {
@@ -204,13 +241,13 @@ export function CameraPunch({ employeeId, canTimeIn, canTimeOut }: Props) {
             <option value="afternoon_half">Half Day - Afternoon</option>
           </select>
         </div>
-        <button className="btn-primary min-h-20 text-lg" type="button" disabled={!canTimeIn || pending} onClick={() => openCamera("time_in")}>
-          <Clock3 size={24} />
-          Time In
+        <button className="btn-primary min-h-20 text-lg" type="button" disabled={!canTimeIn || pending || openingCamera} onClick={() => openCamera("time_in")}>
+          {openingCamera && mode === "time_in" ? <Loader2 className="animate-spin" size={24} /> : <Clock3 size={24} />}
+          {openingCamera && mode === "time_in" ? "Opening..." : "Time In"}
         </button>
-        <button className="btn-secondary min-h-20 text-lg" type="button" disabled={!canTimeOut || pending} onClick={() => openCamera("time_out")}>
-          <CheckCircle2 size={24} />
-          Time Out
+        <button className="btn-secondary min-h-20 text-lg" type="button" disabled={!canTimeOut || pending || openingCamera} onClick={() => openCamera("time_out")}>
+          {openingCamera && mode === "time_out" ? <Loader2 className="animate-spin" size={24} /> : <CheckCircle2 size={24} />}
+          {openingCamera && mode === "time_out" ? "Opening..." : "Time Out"}
         </button>
       </div>
 
