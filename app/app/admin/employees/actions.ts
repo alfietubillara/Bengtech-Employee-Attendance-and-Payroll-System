@@ -18,6 +18,7 @@ export async function upsertEmployee(formData: FormData) {
     branch_id: String(formData.get("branch_id") || "") || null,
     position: String(formData.get("position") || ""),
     daily_rate: Number(formData.get("daily_rate") || 0),
+    required_work_hours_per_day: Number(formData.get("required_work_hours_per_day") || 10),
     contact_number: String(formData.get("contact_number") || "") || null,
     status: String(formData.get("status") || "Active"),
     day_off: formData.getAll("day_off").map(Number)
@@ -50,11 +51,13 @@ export async function updateEmployeeAccess(formData: FormData) {
   const id = String(formData.get("id"));
   const role = String(formData.get("role") || "employee");
   const status = String(formData.get("status") || "Active");
+  const dailyRate = Number(formData.get("daily_rate") || 0);
+  const requiredHours = Number(formData.get("required_work_hours_per_day") || 10);
 
   if (!["admin", "manager", "employee"].includes(role)) throw new Error("Invalid role.");
   if (!["Active", "Inactive"].includes(status)) throw new Error("Invalid status.");
 
-  const { error } = await admin.from("profiles").update({ role, status }).eq("id", id);
+  const { error } = await admin.from("profiles").update({ role, status, daily_rate: dailyRate, required_work_hours_per_day: requiredHours }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/app/admin/employees");
 }

@@ -47,6 +47,7 @@ export default async function EmployeesPage() {
         </select>
         <input className="field" name="position" placeholder="Position" required />
         <input className="field" name="daily_rate" type="number" min="0" step="0.01" placeholder="Daily rate" required />
+        <input className="field" name="required_work_hours_per_day" type="number" min="1" step="0.25" placeholder="Required hours/day" defaultValue={10} required />
         <input className="field" name="contact_number" placeholder="Contact number" />
         <select className="field" name="status" defaultValue="Active">
           <option>Active</option>
@@ -78,6 +79,7 @@ export default async function EmployeesPage() {
                 <th className="px-4 py-3">Branch</th>
                 <th className="px-4 py-3">Position</th>
                 <th className="px-4 py-3">Rate</th>
+                <th className="px-4 py-3">Hours</th>
                 <th className="px-4 py-3">Role</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Action</th>
@@ -90,6 +92,7 @@ export default async function EmployeesPage() {
                   <td className="px-4 py-3">{employee.branches?.name || "-"}</td>
                   <td className="px-4 py-3">{employee.position}</td>
                   <td className="px-4 py-3">{formatPeso(employee.daily_rate)}</td>
+                  <td className="px-4 py-3">{employee.required_work_hours_per_day || 10}</td>
                   <td className="px-4 py-3 capitalize">{employee.role}</td>
                   <td className="px-4 py-3">{employee.status}</td>
                   <td className="px-4 py-3">
@@ -105,6 +108,8 @@ export default async function EmployeesPage() {
                           <option>Active</option>
                           <option>Inactive</option>
                         </select>
+                        <input className="field w-28" name="daily_rate" type="number" min="0" step="0.01" defaultValue={employee.daily_rate} />
+                        <input className="field w-24" name="required_work_hours_per_day" type="number" min="1" step="0.25" defaultValue={employee.required_work_hours_per_day || 10} />
                         <button className="btn-secondary" type="submit">
                           Save
                         </button>
