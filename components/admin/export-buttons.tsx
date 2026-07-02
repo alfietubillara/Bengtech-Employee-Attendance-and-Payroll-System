@@ -1,11 +1,10 @@
 "use client";
 
-import ExcelJS from "exceljs";
 import { Download, FileText } from "lucide-react";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 export function ExportButtons({ rows, filename }: { rows: Record<string, unknown>[]; filename: string }) {
   async function exportExcel() {
+    const ExcelJS = (await import("exceljs")).default;
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Bengtech");
     worksheet.columns = Object.keys(rows[0] || {}).map((key) => ({ header: key, key, width: 20 }));
@@ -16,6 +15,7 @@ export function ExportButtons({ rows, filename }: { rows: Record<string, unknown
   }
 
   async function exportPdf() {
+    const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
     const pdf = await PDFDocument.create();
     let page = pdf.addPage([842, 595]);
     const font = await pdf.embedFont(StandardFonts.Helvetica);
