@@ -27,6 +27,7 @@ create table profiles (
   branch_id uuid references branches(id),
   position text not null default 'Staff',
   daily_rate numeric(10, 2) not null default 0,
+  required_work_hours_per_day numeric(5, 2) not null default 10,
   contact_number text,
   status employee_status not null default 'Active',
   profile_photo_path text,
@@ -182,20 +183,30 @@ create table payroll_records (
   employee_name text not null,
   branch_name text not null,
   daily_rate numeric(10, 2) not null,
+  required_work_hours_per_day numeric(5, 2) not null default 10,
+  hourly_rate numeric(10, 2) not null default 0,
   present_days integer not null,
   paid_days numeric(8, 2) not null default 0,
   late_days integer not null,
   absent_days integer not null,
   half_days integer not null default 0,
+  total_late_minutes integer not null default 0,
+  total_undertime_minutes integer not null default 0,
+  total_overtime_minutes integer not null default 0,
   overtime_hours numeric(8, 2) not null default 0,
+  overtime_multiplier numeric(5, 2) not null default 1.25,
+  basic_pay numeric(10, 2) not null default 0,
   allowance numeric(10, 2) not null default 0,
+  bonus_pay numeric(10, 2) not null default 0,
   cash_advance numeric(10, 2) not null default 0,
   other_deductions numeric(10, 2) not null default 0,
   gross_pay numeric(10, 2) not null,
   late_deduction numeric(10, 2) not null,
+  undertime_deduction numeric(10, 2) not null default 0,
   absent_deduction numeric(10, 2) not null,
   overtime_pay numeric(10, 2) not null,
   holiday_pay numeric(10, 2) not null default 0,
+  total_deductions numeric(10, 2) not null default 0,
   net_salary numeric(10, 2) not null,
   created_at timestamptz not null default now(),
   unique(payroll_month, payroll_period, employee_id)
@@ -246,7 +257,8 @@ create table settings (
 insert into settings(key, value) values
   ('opening_time', '"08:00"'),
   ('closing_time', '"18:00"'),
-  ('absent_cutoff_time', '"09:00"')
+  ('absent_cutoff_time', '"09:00"'),
+  ('overtime_multiplier', '1.25')
 on conflict (key) do nothing;
 
 create or replace function current_ph_date()
