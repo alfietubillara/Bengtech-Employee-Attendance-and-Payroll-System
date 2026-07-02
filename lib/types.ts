@@ -30,6 +30,7 @@ export type Profile = {
   branch_id: string | null;
   position: string;
   daily_rate: number;
+  required_work_hours_per_day: number;
   contact_number: string | null;
   status: EmployeeStatus;
   profile_photo_path: string | null;
@@ -61,20 +62,29 @@ export type PayrollRow = {
   employee_name: string;
   branch_name: string;
   daily_rate: number;
+  required_work_hours_per_day: number;
+  hourly_rate: number;
   present_days: number;
   paid_days: number;
   late_days: number;
   absent_days: number;
   half_days: number;
+  total_late_minutes: number;
+  total_undertime_minutes: number;
+  total_overtime_minutes: number;
   overtime_hours: number;
+  basic_pay: number;
   allowance: number;
+  bonus_pay: number;
   cash_advance: number;
   other_deductions: number;
   gross_pay: number;
   late_deduction: number;
+  undertime_deduction: number;
   absent_deduction: number;
   overtime_pay: number;
   holiday_pay: number;
+  total_deductions: number;
   net_salary: number;
 };
 
