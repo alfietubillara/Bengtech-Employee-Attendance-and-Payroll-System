@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { Archive, BarChart3, Building2, CalendarDays, Clock3, ClipboardCheck, History, LogOut, MapPin, ReceiptText, Smartphone, Users } from "lucide-react";
+import { Archive, BarChart3, Building2, CalendarDays, Clock3, ClipboardCheck, History, LogOut, ReceiptText, Smartphone, Users } from "lucide-react";
 import { signOut } from "@/app/login/actions";
 import { NotificationBell } from "@/components/admin/notification-bell";
 import { createClient } from "@/lib/supabase/server";
@@ -9,7 +9,6 @@ import type { Profile } from "@/lib/types";
 
 const nav = [
   { href: "/app", label: "Today", icon: Clock3, roles: ["admin", "manager", "employee"] },
-  { href: "/app/location-test", label: "GPS Test", icon: MapPin, roles: ["admin", "manager", "employee"] },
   { href: "/app/my-records", label: "My Records", icon: CalendarDays, roles: ["employee"] },
   { href: "/app/requests", label: "Requests", icon: ClipboardCheck, roles: ["employee"] },
   { href: "/app/admin", label: "Dashboard", icon: BarChart3, roles: ["admin", "manager"] },

@@ -82,18 +82,22 @@ export function CameraPunch({ employeeId, canTimeIn, canTimeOut }: Props) {
       timeStyle: "medium",
       timeZone: "Asia/Manila"
     }).format(new Date());
-    const label = `BENGTECH ${mode === "time_in" ? "TIME IN" : "TIME OUT"} - ${stamp}`;
-    const bandHeight = Math.max(92, Math.round(canvas.height * 0.16));
+    const actionLabel = `BENGTECH ${mode === "time_in" ? "TIME IN" : "TIME OUT"}`;
+    const dateTimeLabel = `DATE & TIME: ${stamp}`;
+    const bandHeight = Math.max(132, Math.round(canvas.height * 0.22));
     context.fillStyle = "rgba(0, 0, 0, 0.72)";
     context.fillRect(0, canvas.height - bandHeight, canvas.width, bandHeight);
     context.fillStyle = "#ffffff";
     context.strokeStyle = "#000000";
     context.lineWidth = Math.max(4, Math.round(canvas.width * 0.006));
-    context.font = `900 ${Math.max(28, Math.round(canvas.width * 0.046))}px Arial`;
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.strokeText(label, canvas.width / 2, canvas.height - bandHeight / 2);
-    context.fillText(label, canvas.width / 2, canvas.height - bandHeight / 2);
+    context.font = `900 ${Math.max(30, Math.round(canvas.width * 0.052))}px Arial`;
+    context.strokeText(actionLabel, canvas.width / 2, canvas.height - bandHeight * 0.64);
+    context.fillText(actionLabel, canvas.width / 2, canvas.height - bandHeight * 0.64);
+    context.font = `900 ${Math.max(24, Math.round(canvas.width * 0.04))}px Arial`;
+    context.strokeText(dateTimeLabel, canvas.width / 2, canvas.height - bandHeight * 0.32);
+    context.fillText(dateTimeLabel, canvas.width / 2, canvas.height - bandHeight * 0.32);
 
     const watermarked = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Could not watermark selfie."))), "image/jpeg", 0.9);
