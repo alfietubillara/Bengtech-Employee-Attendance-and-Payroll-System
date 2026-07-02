@@ -9,7 +9,7 @@ export async function saveAdjustment(formData: FormData) {
   const { profile } = await requireRole(["admin", "manager"]);
   const admin = createAdminClient();
   const table = String(formData.get("table"));
-  if (!["cash_advances", "allowances", "deductions", "overtime_entries"].includes(table)) throw new Error("Invalid payroll adjustment.");
+  if (!["cash_advances", "allowances", "deductions"].includes(table)) throw new Error("Invalid payroll adjustment.");
   if (profile.role === "manager" && table !== "allowances") {
     throw new Error("Branch managers can only add incentives or bonuses.");
   }
@@ -28,9 +28,7 @@ export async function saveAdjustment(formData: FormData) {
   const { data: lock } = await admin.from("payroll_locks").select("id").eq("payroll_month", common.payroll_month).eq("payroll_period", common.payroll_period).maybeSingle();
   if (lock) throw new Error("This payroll period is locked.");
   const { error } =
-    table === "overtime_entries"
-      ? await admin.from("overtime_entries").insert({ ...common, hours: Number(formData.get("hours") || 0) })
-      : table === "cash_advances"
+    table === "cash_advances"
         ? await admin.from("cash_advances").insert({ ...common, amount: Number(formData.get("amount") || 0) })
         : table === "allowances"
           ? await admin.from("allowances").insert({ ...common, amount: Number(formData.get("amount") || 0) })
