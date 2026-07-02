@@ -16,7 +16,7 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
   if (effectiveBranch) employeeQuery = employeeQuery.eq("branch_id", effectiveBranch);
   if (params.employee) employeeQuery = employeeQuery.eq("id", params.employee);
 
-  const [{ data: employeeData }, { data: attendanceData }, { data: branchData }, { data: cashAdvanceData }, { data: allowanceData }, { data: deductionData }, { data: overtimeData }, { data: holidayData }, { data: lock }] =
+  const [{ data: employeeData }, { data: attendanceData }, { data: branchData }, { data: cashAdvanceData }, { data: allowanceData }, { data: deductionData }, { data: holidayData }, { data: lock }, { data: overtimeSetting }] =
     await Promise.all([
       employeeQuery,
       effectiveBranch
@@ -26,9 +26,9 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
       supabase.from("cash_advances").select("*").eq("payroll_month", month).eq("payroll_period", period),
       supabase.from("allowances").select("*").eq("payroll_month", month).eq("payroll_period", period),
       supabase.from("deductions").select("*").eq("payroll_month", month).eq("payroll_period", period),
-      supabase.from("overtime_entries").select("*").eq("payroll_month", month).eq("payroll_period", period),
       supabase.from("holidays").select("*").gte("holiday_date", start).lte("holiday_date", end),
-      supabase.from("payroll_locks").select("*").eq("payroll_month", month).eq("payroll_period", period).maybeSingle()
+      supabase.from("payroll_locks").select("*").eq("payroll_month", month).eq("payroll_period", period).maybeSingle(),
+      supabase.from("settings").select("value").eq("key", "overtime_multiplier").maybeSingle()
     ]);
   const employees = employeeData ?? [];
   const attendance = attendanceData ?? [];
@@ -36,10 +36,10 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
   const cashAdvances = cashAdvanceData ?? [];
   const allowances = allowanceData ?? [];
   const deductions = deductionData ?? [];
-  const overtime = overtimeData ?? [];
   const holidays = holidayData ?? [];
+  const overtimeMultiplier = Number(overtimeSetting?.value || 1.25);
 
-  const rows = buildPayrollRows({ employees, attendance, cashAdvances, allowances, deductions, overtime, holidays });
+  const rows = buildPayrollRows({ employees, attendance, cashAdvances, allowances, deductions, holidays, overtimeMultiplier });
   const isLocked = Boolean(lock);
   const managerMode = profile.role === "manager";
 
@@ -80,11 +80,10 @@ export default async function PayrollPage({ searchParams }: { searchParams: Prom
       <form action={saveAdjustment} className="panel grid gap-3 p-4 md:grid-cols-6">
         <input type="hidden" name="payroll_month" value={month} />
         <input type="hidden" name="payroll_period" value={period} />
-        <select className="field" name="table" defaultValue="cash_advances">
+        <select className="field" name="table" defaultValue={managerMode ? "allowances" : "cash_advances"}>
           {!managerMode ? <option value="cash_advances">Cash Advance</option> : null}
-          <option value="allowances">Incentive / Bonus / Allowance</option>
+          <option value="allowances">Bonus / Additional Pay</option>
           {!managerMode ? <option value="deductions">Other Deduction</option> : null}
-          {!managerMode ? <option value="overtime_entries">Overtime Hours</option> : null}
         </select>
         <select className="field md:col-span-2" name="employee_id" required>
           <option value="">Employee</option>
